@@ -225,7 +225,7 @@ def main():
         selcted_city_fsa = st.session_state["selected_fsa"]
         selcted_city = st.session_state["selected_city"]
 
-        st.markdown('You have selected **'+ selcted_city + '**')
+        st.header('You have selected :'+ selcted_city )
 
 
         sale_city_df = sale_latest[sale_latest["fsa"]== selcted_city_fsa]
@@ -252,7 +252,7 @@ def main():
                        title="ROI by Property Type"
                                      ))
 
-        st.header("Trend ")
+        st.header("Trend Analysis")
 
         sale_og_Df = sale_og_Df[sale_og_Df["fsa"]== selcted_city_fsa]
         rent_og_Df = rent_og_Df[rent_og_Df["fsa"]== selcted_city_fsa]
