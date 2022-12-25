@@ -203,9 +203,10 @@ def main():
     #st.set_page_config(page_title = "Property finder",layout="wide")
 
     st.title("Real Estate Analytics")
-    st.write("Find the best area to invest money in Montreal based on the return of investment(ROI)")
+    st.subheader("Find the best area to invest money in Montreal based on the return of investment(ROI)")
+
     min_price, max_price = st.select_slider(
-        '**Select the price range**',
+        'Select the price range',
         options=[x for x in range(200000,1000000,5000)],
         value=(300000, 500000))
 
@@ -218,13 +219,13 @@ def main():
     roi_df = getROILatest(sale_latest, rent_latest)
 
     display_map(roi_df)
-    st.write('Select a town on the map for insight')
+    st.caption('Select a town on the map for insight')
 
     if st.session_state["selected_city"] != "":
         selcted_city_fsa = st.session_state["selected_fsa"]
         selcted_city = st.session_state["selected_city"]
 
-        st.header(selcted_city)
+        st.markdown('You have selected **'+ selcted_city + '**')
 
 
         sale_city_df = sale_latest[sale_latest["fsa"]== selcted_city_fsa]
