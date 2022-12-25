@@ -217,6 +217,7 @@ def main():
     roi_df = getROILatest(sale_latest, rent_latest)
 
     display_map(roi_df)
+    st.write('Select a town on the map for insight')
 
     if st.session_state["selected_city"] != "":
         selcted_city_fsa = st.session_state["selected_fsa"]
