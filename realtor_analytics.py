@@ -269,7 +269,7 @@ def main():
                                 labels={
                                     "x": "Date",
                                     "price": "Price",
-                                    "color": "Property Type"
+                                    "color": "Property Type-Bedrooms"
                                 },
                                 title="Sale Price Trends"
                                 ))
@@ -280,7 +280,7 @@ def main():
                                 labels={
                                     "x": "Date",
                                     "price": "Rent",
-                                    "color": "Property Type"
+                                    "color": "Property Type-Bedrooms"
                                 },
                                 title="Rent Trends"
                                 ))
@@ -293,7 +293,7 @@ def main():
                                 labels={
                                     "x": "Date",
                                     "price": "ROI",
-                                    "color": "Property Type"
+                                    "color": "Property Type-Bedrooms"
                                 },
                                 title="ROI Trends"
                                 ))
