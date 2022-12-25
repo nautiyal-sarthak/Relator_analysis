@@ -202,12 +202,15 @@ def main():
     ########UI############
     #st.set_page_config(page_title = "Property finder",layout="wide")
 
+    st.header("Find the best area to invest money")
     min_price, max_price = st.select_slider(
         'Select the price range',
         options=[x for x in range(200000,1000000,5000)],
         value=(300000, 500000))
 
     st.write('You selected sale price between', min_price, 'and', max_price)
+
+
 
     sale_latest = sale_latest[(sale_latest["price"] > min_price) & (sale_latest["price"] < max_price)]
     rent_latest = rent_latest[rent_latest["Bedrooms"].isin(sale_latest["Bedrooms"].unique())]
