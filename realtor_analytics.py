@@ -203,9 +203,9 @@ def main():
     #st.set_page_config(page_title = "Property finder",layout="wide")
 
     st.title("Real Estate Analytics")
-    st.header("Find the best area to invest money in Montreal")
+    st.write("Find the best area to invest money in Montreal based on the return of investment(ROI)")
     min_price, max_price = st.select_slider(
-        'Select the price range',
+        '**Select the price range**',
         options=[x for x in range(200000,1000000,5000)],
         value=(300000, 500000))
 
