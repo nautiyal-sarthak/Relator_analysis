@@ -204,7 +204,7 @@ def main():
 
     st.title("Real Estate Analytics")
     st.subheader("Find the best area to invest money in Montreal based on the return of investment(ROI)")
-    st.info('This is a purely informational message', icon="ℹ️")
+    st.info('ROI=(Monthly Rent * 12 / Sale price)*100', icon="ℹ️")
 
     min_price, max_price = st.select_slider(
         'Select the price range',
