@@ -261,7 +261,12 @@ def main():
         ##########PRICE TREND#########
         sale_trend = sale_og_Df.groupby(["extract_time","Bedrooms","Type"]).mean()["price"]
         rent_trend = rent_og_Df.groupby(["extract_time", "Bedrooms","Type"]).mean()["price"]
-        roi_trend = rent_trend/sale_trend 
+        roi_trend = rent_trend/sale_trend
+        
+        roi_trend = sale_trend.merge(rent_trend, left_on=["extract_time","Bedrooms","Type"], right_on=["extract_time","Bedrooms","Type"])
+        roi_trend['roi'] =  ((roi_trend['mean_y'] * 12)/roi_trend['mean_x']) * 100
+        roi_trend = roi_trend.rename(columns={"mean_x": "sale_price", "count_x": "total_sale_count", "mean_y": "rent_price",
+                                    "count_y": "total_rent_count"})
         
         tab1, tab2, tab3 = st.tabs(["Sale Price", "Rent", "Return of Investment"])
 
@@ -294,7 +299,7 @@ def main():
         with tab3:
            st.header("Return of Investment")
            st.plotly_chart(px.line(roi_trend, x=roi_trend.index.get_level_values(0),
-                        y="price",
+                        y="roi",
                         color=roi_trend.index.get_level_values(2) + "-" + roi_trend.index.get_level_values(
                             1),
                         labels={
