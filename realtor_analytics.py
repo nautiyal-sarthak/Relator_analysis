@@ -261,9 +261,9 @@ def main():
         ##########PRICE TREND#########
         sale_trend = sale_og_Df.groupby(["extract_time","Bedrooms","Type"]).mean()["price"]
         rent_trend = rent_og_Df.groupby(["extract_time", "Bedrooms","Type"]).mean()["price"]
-        roi_trend = rent_trend/sale_trend
+        roi_trend = rent_trend/sale_trend 
         
-        tab1, tab2, tab3 = st.tabs(["Cat", "Dog", "Owl"])
+        tab1, tab2, tab3 = st.tabs(["Sale Price", "Rent", "Return of Investment"])
 
         with tab1:
            st.header("Sale Price")
