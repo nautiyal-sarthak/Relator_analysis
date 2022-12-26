@@ -295,7 +295,7 @@ def main():
         with tab3:
            st.header("Return of Investment")
            st.plotly_chart(px.line(roi_trend, x=roi_trend.index.get_level_values(0),
-                        y="roi",
+                        y="price",
                         color=roi_trend.index.get_level_values(2) + "-" + roi_trend.index.get_level_values(
                             1),
                         labels={
