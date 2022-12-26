@@ -262,44 +262,48 @@ def main():
         sale_trend = sale_og_Df.groupby(["extract_time","Bedrooms","Type"]).mean()["price"]
         rent_trend = rent_og_Df.groupby(["extract_time", "Bedrooms","Type"]).mean()["price"]
         roi_trend = rent_trend/sale_trend
+        
+        tab1, tab2, tab3 = st.tabs(["Cat", "Dog", "Owl"])
 
+        with tab1:
+           st.header("Sale Price")
+           st.plotly_chart(px.line(sale_trend, x=sale_trend.index.get_level_values(0),
+                        y="price", color=sale_trend.index.get_level_values(
+        2) + "-" + sale_trend.index.get_level_values(1),
+                        labels={
+                            "x": "Date",
+                            "price": "Price",
+                            "color": "Property Type-Bedrooms"
+                        },
+                        title="Sale Price Trends"
+                        ))
 
-        st.plotly_chart(px.line(sale_trend, x=sale_trend.index.get_level_values(0),
-                                y="price", color=sale_trend.index.get_level_values(
-                2) + "-" + sale_trend.index.get_level_values(1),
-                                labels={
-                                    "x": "Date",
-                                    "price": "Price",
-                                    "color": "Property Type-Bedrooms"
-                                },
-                                title="Sale Price Trends"
-                                ))
+        with tab2:
+           st.header("Rent")
+           st.plotly_chart(px.line(rent_trend, x=rent_trend.index.get_level_values(0),
+                        y="price", color=rent_trend.index.get_level_values(
+        2) + "-" + rent_trend.index.get_level_values(1),
+                        labels={
+                            "x": "Date",
+                            "price": "Rent",
+                            "color": "Property Type-Bedrooms"
+                        },
+                        title="Rent Trends"
+                        ))
 
-        st.plotly_chart(px.line(rent_trend, x=rent_trend.index.get_level_values(0),
-                                y="price", color=rent_trend.index.get_level_values(
-                2) + "-" + rent_trend.index.get_level_values(1),
-                                labels={
-                                    "x": "Date",
-                                    "price": "Rent",
-                                    "color": "Property Type-Bedrooms"
-                                },
-                                title="Rent Trends"
-                                ))
-
-
-        st.plotly_chart(px.line(roi_trend, x=roi_trend.index.get_level_values(0),
-                                y="price",
-                                color=roi_trend.index.get_level_values(2) + "-" + roi_trend.index.get_level_values(
-                                    1),
-                                labels={
-                                    "x": "Date",
-                                    "price": "ROI",
-                                    "color": "Property Type-Bedrooms"
-                                },
-                                title="ROI Trends"
-                                ))
-
-
+        with tab3:
+           st.header("Return of Investment")
+           st.plotly_chart(px.line(roi_trend, x=roi_trend.index.get_level_values(0),
+                        y="price",
+                        color=roi_trend.index.get_level_values(2) + "-" + roi_trend.index.get_level_values(
+                            1),
+                        labels={
+                            "x": "Date",
+                            "price": "ROI",
+                            "color": "Property Type-Bedrooms"
+                        },
+                        title="ROI Trends"
+                        ))
 
 
 
