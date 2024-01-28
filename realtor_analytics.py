@@ -180,7 +180,7 @@ def getROILatest(sale_df, rent_df):
     st.dataframe(sale_df)
 
     sale_summery = sale_df.groupby(["fsa",'city'])["price"].agg(['mean', 'count'])
-    rent_summary = rent_df.groupby(["fsa",'city']).agg(['mean', 'count'])["price"]
+    rent_summary = rent_df.groupby(["fsa",'city'])["price"].agg(['mean', 'count'])
 
 
     roi_df = sale_summery.merge(rent_summary, left_on=['fsa','city'], right_on=['fsa','city'])
