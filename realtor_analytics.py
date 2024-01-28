@@ -167,8 +167,8 @@ def display_map(df):
         st.session_state["selected_fsa"] = state_fsa
 
 def getROILatest(sale_df, rent_df):
-    sale_summery = sale_df.groupby(["fsa",'city']).agg(['mean', 'count'])["price"]
-    rent_summary = rent_df.groupby(["fsa",'city']).agg(['mean', 'count'])["price"]
+    sale_summery = sale_df.groupby(["fsa",'city']).agg(['mean', 'count'],numeric_only=True)["price"]
+    rent_summary = rent_df.groupby(["fsa",'city']).agg(['mean', 'count'],numeric_only=True)["price"]
 
 
     roi_df = sale_summery.merge(rent_summary, left_on=['fsa','city'], right_on=['fsa','city'])
