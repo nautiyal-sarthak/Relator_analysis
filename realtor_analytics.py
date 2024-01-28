@@ -179,7 +179,7 @@ def getROILatest(sale_df, rent_df):
 
     st.dataframe(sale_df)
 
-    sale_summery = sale_df.groupby(["fsa",'city']).agg(['mean', 'count'])["price"]
+    sale_summery = sale_df.groupby(["fsa",'city'])["price"].agg(['mean', 'count'])
     rent_summary = rent_df.groupby(["fsa",'city']).agg(['mean', 'count'])["price"]
 
 
