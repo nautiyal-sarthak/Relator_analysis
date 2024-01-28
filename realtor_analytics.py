@@ -271,8 +271,8 @@ def main():
         rent_og_Df = rent_og_Df[rent_og_Df["fsa"]== selcted_city_fsa]
 
         ##########PRICE TREND#########
-        sale_trend = sale_og_Df.groupby(["extract_time","Bedrooms","Type"]).mean()["price"]
-        rent_trend = rent_og_Df.groupby(["extract_time", "Bedrooms","Type"]).mean()["price"]
+        sale_trend = sale_og_Df.groupby(["extract_time","Bedrooms","Type"])["price"].mean()
+        rent_trend = rent_og_Df.groupby(["extract_time", "Bedrooms","Type"])["price"].mean()
         roi_trend = (rent_trend*12/sale_trend)*100
        
         
