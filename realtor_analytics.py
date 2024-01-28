@@ -171,6 +171,13 @@ def getROILatest(sale_df, rent_df):
     sale_df['price'] = pd.to_numeric(sale_df['price'], errors='coerce')
     sale_df = sale_df.dropna(subset=['price'])
 
+    # Assuming sale_df is your DataFrame
+    sale_df['price'] = pd.to_numeric(sale_df['price'], errors='coerce')
+
+    # Drop rows with NaN values in the 'price' column
+    sale_df = sale_df.dropna(subset=['price'])
+
+
     rent_df['price'] = pd.to_numeric(rent_df['price'], errors='coerce')
     rent_df = rent_df.dropna(subset=['price'])
 
