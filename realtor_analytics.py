@@ -80,6 +80,7 @@ def getMergedDataframe(folder_id):
         print(u'{0} ({1})'.format(item['name'], item['id']))
         df = getFormatedDf(getDataFrame(sheet_credentials,item['id']))
         dflst.append(df)
+        break
 
     combined_df = pd.concat(dflst)
 
