@@ -245,8 +245,8 @@ def main():
         rent_city_df = rent_latest[rent_latest["fsa"]== selcted_city_fsa]
 
 
-        sale_summery = sale_city_df.groupby(["Bedrooms","Type"]).agg(['mean', 'count'])["price"]
-        rent_summary = rent_city_df.groupby(["Bedrooms","Type"]).agg(['mean', 'count'])["price"]
+        sale_summery = sale_city_df.groupby(["Bedrooms","Type"])["price"].agg(['mean', 'count'])
+        rent_summary = rent_city_df.groupby(["Bedrooms","Type"])["price"].agg(['mean', 'count'])
 
         roi_df = sale_summery.merge(rent_summary, left_on=["Bedrooms","Type"], right_on=["Bedrooms","Type"])
         roi_df['roi'] =  ((roi_df['mean_y'] * 12)/roi_df['mean_x']) * 100
