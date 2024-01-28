@@ -174,8 +174,8 @@ def getROILatest(sale_df, rent_df):
     rent_df['price'] = pd.to_numeric(rent_df['price'], errors='coerce')
     rent_df = rent_df.dropna(subset=['price'])
 
-    sale_summery = sale_df.groupby(["fsa",'city']).agg(['mean', 'count'])["price"]
-    rent_summary = rent_df.groupby(["fsa",'city']).agg(['mean', 'count'])["price"]
+    sale_summery = sale_df.groupby(["fsa",'city']).agg(['mean', 'count'],numeric_only=True)["price"]
+    rent_summary = rent_df.groupby(["fsa",'city']).agg(['mean', 'count'],numeric_only=True)["price"]
 
 
     roi_df = sale_summery.merge(rent_summary, left_on=['fsa','city'], right_on=['fsa','city'])
