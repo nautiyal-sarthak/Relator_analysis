@@ -94,7 +94,6 @@ def getFormatedDf(dfIn):
 
     return dfOut[['Bedrooms','price','Type','extract_time','fsa']]
 
-
 def getDetails(df_indexed,key,output):
     try:
        result = df_indexed.loc[key, output]
@@ -249,10 +248,14 @@ def main():
             'Select group:',
             ['Type', 'Bedrooms'])
 
+        print(options)
+
         if len(options) > 1 :
             grp_str = 'Type-Bedrooms'
-        else :
+        elif len(options) == 1 :
             grp_str = options[0]
+        else:
+            grp_str = ''
 
 
         sale_og_Df = sale_og_Df[sale_og_Df["fsa"]== selcted_city_fsa]
@@ -264,36 +267,64 @@ def main():
         tab1, tab2, tab3 = st.tabs(["Sale Price", "Rent", "Return of Investment"])
 
 
-
-        sale_trend = sale_og_Df.groupby(['extract_time',grp_str])["price"].mean()
-        sale_trend = sale_trend.reset_index()
-        rent_trend = rent_og_Df.groupby(['extract_time',grp_str])["price"].mean()
-        rent_trend = rent_trend.reset_index()
-
-
-        rent_ration_df = pd.merge(sale_trend,rent_trend,on=['extract_time',grp_str],how='inner').reset_index()
-        rent_ration_df = rent_ration_df.rename(columns={'price_x': 'sale_price', 'price_y': 'rent_price'})
-        rent_ration_df['ratio'] = rent_ration_df['rent_price']/rent_ration_df['sale_price']
+        if grp_str != '':
+            sale_trend = sale_og_Df.groupby(['extract_time',grp_str])["price"].mean()
+            sale_trend = sale_trend.reset_index()
+            rent_trend = rent_og_Df.groupby(['extract_time',grp_str])["price"].mean()
+            rent_trend = rent_trend.reset_index()
 
 
+            rent_ration_df = pd.merge(sale_trend,rent_trend,on=['extract_time',grp_str],how='inner').reset_index()
+            rent_ration_df = rent_ration_df.rename(columns={'price_x': 'sale_price', 'price_y': 'rent_price'})
+            rent_ration_df['ratio'] = rent_ration_df['rent_price']/rent_ration_df['sale_price']
 
-        with tab1:
-           st.header("Sale Price")
-           st.plotly_chart(px.line(sale_trend, x='extract_time',
-                        y="price",color=grp_str
-                        ))
 
-        with tab2:
-           st.header("Rent")
-           st.plotly_chart(px.line(rent_trend, x='extract_time',
-                        y="price",color=grp_str
-                        ))
 
-        with tab3:
-           st.header("Ratio")
-           st.plotly_chart(px.line(rent_ration_df, x='extract_time',
-                        y="ratio",color=grp_str
-                        ))
+            with tab1:
+               st.header("Sale Price")
+               st.plotly_chart(px.line(sale_trend, x='extract_time',
+                            y="price",color=grp_str
+                            ))
+
+            with tab2:
+               st.header("Rent")
+               st.plotly_chart(px.line(rent_trend, x='extract_time',
+                            y="price",color=grp_str
+                            ))
+
+            with tab3:
+               st.header("Ratio")
+               st.plotly_chart(px.line(rent_ration_df, x='extract_time',
+                            y="ratio",color=grp_str
+                            ))
+        else:
+            sale_trend = sale_og_Df.groupby(['extract_time'])["price"].mean()
+            sale_trend = sale_trend.reset_index()
+            rent_trend = rent_og_Df.groupby(['extract_time'])["price"].mean()
+            rent_trend = rent_trend.reset_index()
+
+            rent_ration_df = pd.merge(sale_trend, rent_trend, on=['extract_time'], how='inner').reset_index()
+            rent_ration_df = rent_ration_df.rename(columns={'price_x': 'sale_price', 'price_y': 'rent_price'})
+            rent_ration_df['ratio'] = rent_ration_df['rent_price'] / rent_ration_df['sale_price']
+
+            with tab1:
+                st.header("Sale Price")
+                st.plotly_chart(px.line(sale_trend, x='extract_time',
+                                        y="price"
+                                        ))
+
+            with tab2:
+                st.header("Rent")
+                st.plotly_chart(px.line(rent_trend, x='extract_time',
+                                        y="price"
+                                        ))
+
+            with tab3:
+                st.header("Ratio")
+                st.plotly_chart(px.line(rent_ration_df, x='extract_time',
+                                        y="ratio"
+                                        ))
+
 
 
 
