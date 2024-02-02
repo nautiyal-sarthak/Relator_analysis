@@ -57,6 +57,7 @@ def getSheetcredentials():
             token.write(creds.to_json())
     return creds
 
+
 def getDataFrame(credentials,SPREADSHEET_ID):
     print("reading " + SPREADSHEET_ID)
     service = build('sheets', 'v4', credentials=credentials)
@@ -66,6 +67,7 @@ def getDataFrame(credentials,SPREADSHEET_ID):
     df.drop(0, inplace=True)
     return df
 
+@st.cache
 def getMergedDataframe(folder_id):
     print("Getting merged df")
     sheet_credentials = getSheetcredentials()
@@ -85,6 +87,7 @@ def getMergedDataframe(folder_id):
     combined_df["price"] = pd.to_numeric(combined_df["price"])
     return combined_df
 
+
 def getFormatedDf(dfIn):
     print("Formating DF")
     dfOut = dfIn[['Bedrooms','price','Type','extract_time','PostalCode','AddressText']]
@@ -93,6 +96,7 @@ def getFormatedDf(dfIn):
     #    str.replace(')','').str.replace(',', '')
 
     return dfOut[['Bedrooms','price','Type','extract_time','fsa']]
+
 
 def getDetails(df_indexed,key,output):
     try:
@@ -109,6 +113,7 @@ def getDetails(df_indexed,key,output):
         out = ""
 
     return out
+
 
 def display_map(df,option):
     print("render map")
@@ -179,6 +184,7 @@ def display_map(df,option):
     if st_map['last_active_drawing']:
         state_fsa = st_map['last_active_drawing']['properties']['postal-fsa']
         st.session_state["selected_fsa"] = state_fsa
+
 
 def getGroupedData(df):
     df['price'] = pd.to_numeric(df['price'], errors='coerce')
@@ -270,14 +276,17 @@ def main():
         if grp_str != '':
             sale_trend = sale_og_Df.groupby(['extract_time',grp_str])["price"].mean()
             sale_trend = sale_trend.reset_index()
+            sale_trend.sort_values(['extract_time'], inplace=True)
+
             rent_trend = rent_og_Df.groupby(['extract_time',grp_str])["price"].mean()
             rent_trend = rent_trend.reset_index()
+            rent_trend.sort_values(['extract_time'], inplace=True)
 
 
             rent_ration_df = pd.merge(sale_trend,rent_trend,on=['extract_time',grp_str],how='inner').reset_index()
             rent_ration_df = rent_ration_df.rename(columns={'price_x': 'sale_price', 'price_y': 'rent_price'})
             rent_ration_df['ratio'] = rent_ration_df['rent_price']/rent_ration_df['sale_price']
-
+            rent_ration_df.sort_values(['extract_time'], inplace=True)
 
 
             with tab1:
@@ -300,12 +309,16 @@ def main():
         else:
             sale_trend = sale_og_Df.groupby(['extract_time'])["price"].mean()
             sale_trend = sale_trend.reset_index()
+            sale_trend.sort_values(['extract_time'], inplace=True)
+
             rent_trend = rent_og_Df.groupby(['extract_time'])["price"].mean()
             rent_trend = rent_trend.reset_index()
+            rent_trend.sort_values(['extract_time'], inplace=True)
 
             rent_ration_df = pd.merge(sale_trend, rent_trend, on=['extract_time'], how='inner').reset_index()
             rent_ration_df = rent_ration_df.rename(columns={'price_x': 'sale_price', 'price_y': 'rent_price'})
             rent_ration_df['ratio'] = rent_ration_df['rent_price'] / rent_ration_df['sale_price']
+            rent_ration_df.sort_values(['extract_time'], inplace=True)
 
             with tab1:
                 st.header("Sale Price")
