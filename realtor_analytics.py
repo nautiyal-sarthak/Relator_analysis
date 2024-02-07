@@ -57,6 +57,7 @@ def getSheetcredentials():
             token.write(creds.to_json())
     return creds
 
+
 def getDataFrame(credentials,SPREADSHEET_ID):
     print("reading " + SPREADSHEET_ID)
     service = build('sheets', 'v4', credentials=credentials)
@@ -66,7 +67,7 @@ def getDataFrame(credentials,SPREADSHEET_ID):
     df.drop(0, inplace=True)
     return df
 
-@st.cache(allow_output_mutation=True)
+@st.cache
 def getMergedDataframe(folder_id):
     print("Getting merged df")
     sheet_credentials = getSheetcredentials()
@@ -76,27 +77,45 @@ def getMergedDataframe(folder_id):
     results = drive.files().list(q = "'" + folder_id + "' in parents and mimeType= 'application/vnd.google-apps.spreadsheet'").execute()
     items = results.get('files', [])
     dflst = []
-    for item in items:
+    for item in items[:5]:
         print(u'{0} ({1})'.format(item['name'], item['id']))
         df = getFormatedDf(getDataFrame(sheet_credentials,item['id']))
         dflst.append(df)
-        break
 
     combined_df = pd.concat(dflst)
 
     combined_df["price"] = pd.to_numeric(combined_df["price"])
     return combined_df
 
+
 def getFormatedDf(dfIn):
     print("Formating DF")
     dfOut = dfIn[['Bedrooms','price','Type','extract_time','PostalCode','AddressText']]
     dfOut["fsa"] = dfOut["PostalCode"].str[0:3]
-    dfOut["city"] = dfOut["AddressText"].str.split(" ").str[-3].str.split("|").str[-1].str.replace('(', '').\
-        str.replace(')','').str.replace(',', '')
+    #dfOut["city"] = dfOut["AddressText"].str.split(" ").str[-3].str.split("|").str[-1].str.replace('(', '').\
+    #    str.replace(')','').str.replace(',', '')
 
-    return dfOut[['Bedrooms','price','Type','extract_time','fsa','city']]
+    return dfOut[['Bedrooms','price','Type','extract_time','fsa']]
 
-def display_map(df):
+
+def getDetails(df_indexed,key,output):
+    try:
+       result = df_indexed.loc[key, output]
+
+
+       if isinstance(result, pd.Series):
+            # If it's a list, join the elements into a single string
+            out = result.unique()[0]
+       else:
+            # If it's a string, keep it as is
+            out = str(result)
+    except KeyError:
+        out = ""
+
+    return out
+
+
+def display_map(df,option):
     print("render map")
     print(st.session_state["selected_fsa"])
     map = folium.Map(location=[45.51732805507313, -73.63700075840842], tiles='CartoDB positron',zoom_control=False,
@@ -104,22 +123,21 @@ def display_map(df):
                dragging=False)
 
 
-    df = df.reset_index()
     cities = gpd.read_file('geoJson/montreal.geojson')
 
 
     main_mp = folium.Choropleth(
         geo_data=cities,
         data=df,
-        columns=('fsa', 'roi'),
+        columns=('fsa',option),
         key_on='feature.properties.postal-fsa',
         fill_color="YlGn",
-        line_opacity=0.8,
+        line_opacity=0.5,
         highlight=True,
-        opacity=0.5,
+        opacity=0.2,
         margin={"r": 0, "t": 0, "l": 0, "b": 0},
         uirevision='constant',
-        legend_name="ROI Ratio",
+        legend_name="sale_price",
         name="All cities",
 
     )
@@ -131,76 +149,58 @@ def display_map(df):
     df_indexed = df.set_index('fsa')
 
     for feature in main_mp.geojson.data['features']:
-        city_fsa = feature['properties']['postal-fsa']
-        feature['properties']['city_name'] = 'City: ' + '{:}'.format(df_indexed.loc[city_fsa, 'city']) if city_fsa in list(df_indexed.index) else ''
-        feature['properties']['roi'] = 'ROI: ' + '{:}'.format(df_indexed.loc[city_fsa, 'roi']) if city_fsa in list(df_indexed.index) else ''
-        feature['properties']['sale count'] = 'Sale count: ' + '{:}'.format(df_indexed.loc[city_fsa, 'total_sale_count']) if city_fsa in list(df_indexed.index) else ''
-        feature['properties']['rent count'] = 'Rent count: ' + '{:}'.format(df_indexed.loc[city_fsa, 'total_rent_count']) if city_fsa in list(df_indexed.index) else ''
+         city_fsa = feature['properties']['postal-fsa']
+
+         feature['properties']['name'] = 'City: ' + '{:}'.format(city_fsa)
+         feature['properties']['sale_price'] = 'Avg sale price: ' + '{:}'.format(getDetails(df_indexed,city_fsa,'sale_price'))
+         feature['properties']['rent'] = 'Avg Rent : ' + '{:}'.format(getDetails(df_indexed, city_fsa, 'rent_price'))
+         feature['properties']['no_of_sale'] = 'NUmber of properties-sale : ' + '{:}'.format(getDetails(df_indexed, city_fsa, 'no_of_sale'))
+         feature['properties']['no_of_rent'] = 'NUmber of properties-rent : ' + '{:}'.format(
+             getDetails(df_indexed, city_fsa, 'no_of_rent'))
 
 
     main_mp.geojson.add_child(
-        folium.features.GeoJsonTooltip(['city_name','roi','sale count','rent count'], labels=False)
+        folium.features.GeoJsonTooltip(['name','sale_price','rent','no_of_sale','no_of_rent'], labels=False)
     )
 
     main_mp.add_to(map)
 
-    # if st.session_state["selected_fsa"] != "" :
-    #     folium.Choropleth(
-    #         geo_data=cities[cities['name'] == st.session_state["selected_fsa"]],
-    #         line_opacity=0.8,
-    #         highlight=True,
-    #         opacity=0.5,
-    #         margin={"r": 0, "t": 0, "l": 0, "b": 0},
-    #         uirevision='constant',
-    #         name="Selected cities",
-    #
-    #     ).add_to(map)
+    if st.session_state["selected_fsa"] != "" :
+        folium.Choropleth(
+            geo_data=cities[cities['postal-fsa'] == st.session_state["selected_fsa"]],
+            line_opacity=0.8,
+            highlight=True,
+            opacity=0.5,
+            margin={"r": 0, "t": 0, "l": 0, "b": 0},
+            uirevision='constant',
+            name="Selected cities",
 
-    #folium.LayerControl().add_to(map)
+        ).add_to(map)
+
+    folium.LayerControl().add_to(map)
 
     st_map = st_folium(map, width=700, height=450)
 
     if st_map['last_active_drawing']:
-        state_name = st_map['last_active_drawing']['properties']['city_name']
-        state_fsa = st_map['last_active_drawing']['properties']['name']
-
-        st.session_state["selected_city"] =  str(state_name).replace('City:','')
+        state_fsa = st_map['last_active_drawing']['properties']['postal-fsa']
         st.session_state["selected_fsa"] = state_fsa
 
-def getROILatest(sale_df, rent_df):
-    sale_df['price'] = pd.to_numeric(sale_df['price'], errors='coerce')
-    sale_df = sale_df.dropna(subset=['price'])
 
-    sale_df['Bedrooms'] = pd.to_numeric(sale_df['Bedrooms'], errors='coerce')
-    sale_df = sale_df.dropna(subset=['Bedrooms'])
+def getGroupedData(df):
+    df['price'] = pd.to_numeric(df['price'], errors='coerce')
+    df = df.dropna(subset=['price'])
 
-    rent_df['price'] = pd.to_numeric(rent_df['price'], errors='coerce')
-    rent_df = rent_df.dropna(subset=['price'])
+    df['Bedrooms'] = pd.to_numeric(df['Bedrooms'], errors='coerce')
+    df = df.dropna(subset=['Bedrooms'])
 
-    st.dataframe(sale_df)
+    df_summery = df.groupby(["fsa", 'Bedrooms'])["price"].agg(['mean', 'count'])
 
-    sale_summery = sale_df.groupby(["fsa",'city'])["price"].agg(['mean', 'count'])
-    rent_summary = rent_df.groupby(["fsa",'city'])["price"].agg(['mean', 'count'])
-
-
-    roi_df = sale_summery.merge(rent_summary, left_on=['fsa','city'], right_on=['fsa','city'])
-
-    roi_df['roi'] = ((roi_df['mean_y'] * 12)/roi_df['mean_x']) * 100
-    roi_df = roi_df.rename(columns={"mean_x": "sale_price", "count_x": "total_sale_count", "mean_y": "rent_price",
-                                    "count_y": "total_rent_count"})
-    return roi_df
-
-def getLatestMonth(in_df):
-    return in_df[in_df["extract_time"] == in_df["extract_time"].max()]
+    return df_summery
 
 def main():
     print("starting app")
     sale_folderid = "14-vUH394CZ9BbjdbjKEHHcXbFxcHV--l"
     rent_folderid = "1xXUgEae8hpe1IQt8mye5lkaAIL4_ZKyO"
-
-
-    if "selected_city" not in st.session_state:
-        st.session_state["selected_city"] = ""
 
     if "selected_fsa" not in st.session_state:
         st.session_state["selected_fsa"] = ""
@@ -208,15 +208,8 @@ def main():
     sale_og_Df = getMergedDataframe(sale_folderid)
     rent_og_Df = getMergedDataframe(rent_folderid)
 
-    sale_latest = getLatestMonth(sale_og_Df)
-    rent_latest = getLatestMonth(rent_og_Df)
-
-    ########UI############
-    #st.set_page_config(page_title = "Property finder",layout="wide")
-
     st.title("Real Estate Analytics")
     st.subheader("Find the best area to invest money in Montreal based on the return of investment(ROI)")
-    st.info('ROI=(Monthly Rent * 12 / Sale price)*100', icon="ℹ️")
 
     min_price, max_price = st.select_slider(
         'Select the price range',
@@ -225,100 +218,125 @@ def main():
 
     st.write('You selected sale price between', min_price, 'and', max_price)
 
+    sale_latest = sale_og_Df[(sale_og_Df["price"] > min_price) & (sale_og_Df["price"] < max_price)]
+    rent_latest = rent_og_Df[rent_og_Df["Bedrooms"].isin(sale_latest["Bedrooms"].unique())]
+
+    rent_aggregate = getGroupedData(rent_latest)
+    sale_aggregate = getGroupedData(sale_latest)
+
+    merged_dataframe = pd.merge(sale_aggregate, rent_aggregate, on=["fsa", 'Bedrooms'], how='inner').reset_index()
+
+    merged_dataframe = merged_dataframe.rename(columns={'mean_x': 'sale_price', 'count_x': 'no_of_sale','mean_y':
+        'rent_price', 'count_y': 'no_of_rent'})
+
+    merged_dataframe['rent_ratio'] = merged_dataframe['rent_price']/merged_dataframe['sale_price']
 
 
-    sale_latest = sale_latest[(sale_latest["price"] > min_price) & (sale_latest["price"] < max_price)]
-    rent_latest = rent_latest[rent_latest["Bedrooms"].isin(sale_latest["Bedrooms"].unique())]
-    roi_df = getROILatest(sale_latest, rent_latest)
 
-    display_map(roi_df)
+    map_option = st.selectbox("select map",['sale_price','rent_price','rent_ratio'])
+    bedroom_option = st.selectbox("Number of bedrooms", list(merged_dataframe['Bedrooms'].unique()))
+
     st.caption('Select a town on the map for insight')
+    display_map(merged_dataframe[merged_dataframe['Bedrooms'] == bedroom_option],map_option)
 
-    if st.session_state["selected_city"] != "":
+
+    if st.session_state["selected_fsa"] != "":
         selcted_city_fsa = st.session_state["selected_fsa"]
-        selcted_city = st.session_state["selected_city"]
 
-        st.header('You have selected :'+ selcted_city )
+        st.header('You have selected :'+ selcted_city_fsa )
 
-
-        sale_city_df = sale_latest[sale_latest["fsa"]== selcted_city_fsa]
-        rent_city_df = rent_latest[rent_latest["fsa"]== selcted_city_fsa]
-
-
-        sale_summery = sale_city_df.groupby(["Bedrooms","Type"])["price"].agg(['mean', 'count'])
-        rent_summary = rent_city_df.groupby(["Bedrooms","Type"])["price"].agg(['mean', 'count'])
-
-        roi_df = sale_summery.merge(rent_summary, left_on=["Bedrooms","Type"], right_on=["Bedrooms","Type"])
-        roi_df['roi'] =  ((roi_df['mean_y'] * 12)/roi_df['mean_x']) * 100
-        roi_df = roi_df.rename(columns={"mean_x": "sale_price", "count_x": "total_sale_count", "mean_y": "rent_price",
-                                    "count_y": "total_rent_count"})
-
-
-        st.plotly_chart(px.histogram(roi_df,hover_data=["total_sale_count"],x=roi_df.index.get_level_values(1) ,y="roi",
-                       color=roi_df.index.get_level_values(0), barmode='group',histfunc='avg',
-                       height=400,
-                       labels={
-                             "x": "Property Type",
-                             "roi": "ROI",
-                             "color": "Number of Bedrooms"
-                         },
-                       title="ROI by Property Type"
-                                     ))
+        st.dataframe(merged_dataframe[merged_dataframe['fsa'] == selcted_city_fsa])
 
         st.header("Trend Analysis")
+        st.caption('Select the group key')
+
+        options = st.multiselect(
+            'Select group:',
+            ['Type', 'Bedrooms'])
+
+        print(options)
+
+        if len(options) > 1 :
+            grp_str = 'Type-Bedrooms'
+        elif len(options) == 1 :
+            grp_str = options[0]
+        else:
+            grp_str = ''
+
 
         sale_og_Df = sale_og_Df[sale_og_Df["fsa"]== selcted_city_fsa]
+        sale_og_Df['Type-Bedrooms'] = sale_og_Df['Type'] + '-' + sale_og_Df['Bedrooms']
         rent_og_Df = rent_og_Df[rent_og_Df["fsa"]== selcted_city_fsa]
+        rent_og_Df['Type-Bedrooms'] = rent_og_Df['Type'] + '-' + rent_og_Df['Bedrooms']
 
         ##########PRICE TREND#########
-        sale_trend = sale_og_Df.groupby(["extract_time","Bedrooms","Type"])["price"].mean()
-        rent_trend = rent_og_Df.groupby(["extract_time", "Bedrooms","Type"])["price"].mean()
-        roi_trend = (rent_trend*12/sale_trend)*100
-       
-        
         tab1, tab2, tab3 = st.tabs(["Sale Price", "Rent", "Return of Investment"])
 
-        with tab1:
-           st.header("Sale Price")
-           st.plotly_chart(px.line(sale_trend, x=sale_trend.index.get_level_values(0),
-                        y="price", color=sale_trend.index.get_level_values(
-        2) + "-" + sale_trend.index.get_level_values(1),
-                        labels={
-                            "x": "Date",
-                            "price": "Price",
-                            "color": "Property Type-Bedrooms"
-                        },
-                        title="Sale Price Trends"
-                        ))
 
-        with tab2:
-           st.header("Rent")
-           st.plotly_chart(px.line(rent_trend, x=rent_trend.index.get_level_values(0),
-                        y="price", color=rent_trend.index.get_level_values(
-        2) + "-" + rent_trend.index.get_level_values(1),
-                        labels={
-                            "x": "Date",
-                            "price": "Rent",
-                            "color": "Property Type-Bedrooms"
-                        },
-                        title="Rent Trends"
-                        ))
+        if grp_str != '':
+            sale_trend = sale_og_Df.groupby(['extract_time',grp_str])["price"].mean()
+            sale_trend = sale_trend.reset_index()
+            sale_trend.sort_values(['extract_time'], inplace=True)
 
-        with tab3:
-           st.header("Return of Investment")
-           st.plotly_chart(px.line(roi_trend, x=roi_trend.index.get_level_values(0),
-                        y="price",
-                        color=roi_trend.index.get_level_values(2) + "-" + roi_trend.index.get_level_values(
-                            1),
-                        labels={
-                            "x": "Date",
-                            "price": "ROI",
-                            "color": "Property Type-Bedrooms"
-                        },
-                        title="ROI Trends"
-                        ))
+            rent_trend = rent_og_Df.groupby(['extract_time',grp_str])["price"].mean()
+            rent_trend = rent_trend.reset_index()
+            rent_trend.sort_values(['extract_time'], inplace=True)
 
 
+            rent_ration_df = pd.merge(sale_trend,rent_trend,on=['extract_time',grp_str],how='inner').reset_index()
+            rent_ration_df = rent_ration_df.rename(columns={'price_x': 'sale_price', 'price_y': 'rent_price'})
+            rent_ration_df['ratio'] = rent_ration_df['rent_price']/rent_ration_df['sale_price']
+            rent_ration_df.sort_values(['extract_time'], inplace=True)
+
+
+            with tab1:
+               st.header("Sale Price")
+               st.plotly_chart(px.line(sale_trend, x='extract_time',
+                            y="price",color=grp_str
+                            ))
+
+            with tab2:
+               st.header("Rent")
+               st.plotly_chart(px.line(rent_trend, x='extract_time',
+                            y="price",color=grp_str
+                            ))
+
+            with tab3:
+               st.header("Ratio")
+               st.plotly_chart(px.line(rent_ration_df, x='extract_time',
+                            y="ratio",color=grp_str
+                            ))
+        else:
+            sale_trend = sale_og_Df.groupby(['extract_time'])["price"].mean()
+            sale_trend = sale_trend.reset_index()
+            sale_trend.sort_values(['extract_time'], inplace=True)
+
+            rent_trend = rent_og_Df.groupby(['extract_time'])["price"].mean()
+            rent_trend = rent_trend.reset_index()
+            rent_trend.sort_values(['extract_time'], inplace=True)
+
+            rent_ration_df = pd.merge(sale_trend, rent_trend, on=['extract_time'], how='inner').reset_index()
+            rent_ration_df = rent_ration_df.rename(columns={'price_x': 'sale_price', 'price_y': 'rent_price'})
+            rent_ration_df['ratio'] = rent_ration_df['rent_price'] / rent_ration_df['sale_price']
+            rent_ration_df.sort_values(['extract_time'], inplace=True)
+
+            with tab1:
+                st.header("Sale Price")
+                st.plotly_chart(px.line(sale_trend, x='extract_time',
+                                        y="price"
+                                        ))
+
+            with tab2:
+                st.header("Rent")
+                st.plotly_chart(px.line(rent_trend, x='extract_time',
+                                        y="price"
+                                        ))
+
+            with tab3:
+                st.header("Ratio")
+                st.plotly_chart(px.line(rent_ration_df, x='extract_time',
+                                        y="ratio"
+                                        ))
 
 
 

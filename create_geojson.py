@@ -30,15 +30,16 @@ def sendreq(fsa):
 
     response = requests.request("GET", url, headers=headers, params=querystring)
     j = json.loads(response.text)
-    feature = j["features"][0]
-    feature["properties"]["name"] = fsa
-    out = json.dumps(feature)
+    if len(j["features"]) > 0:
+       feature = j["features"][0]
+       feature["properties"]["name"] = fsa
+       out = json.dumps(feature)
 
-    with open('data.json', 'a') as f:
-           json.dump(out + ",", f)
+       with open('data.json', 'a') as f:
+              json.dump(out + ",", f)
 
 
-FSA = {
+FSAA = {
        #"H7W":"Laval",
        #"J2X":"SAINT-JEAN-SUR-RICHELIEU",
        #"H4X":"CÔTE SAINT LUC",
@@ -131,51 +132,51 @@ FSA = {
        # "H1B":"",
 
 
-       "H2N":"",
-       "J0P":"",
-       "J6N":"",
-       "J0Z":"",
-       "J7R":"",
-       "H1M":"",
-       "H7M":"",
-       "H4M":"",
-       "J4N":"",
-       "H3Y":"",
-       "J6J":"",
-       "J7W":"",
-       "J4Y":"",
-       "J7G":"",
-       "J2Y":"",
-       "J3K":"",
-       "J4T":"",
-       "H7Z":"",
-       "H2V":"",
-       "H2W":"",
-       "H3X":"",
-       "H3C":"",
-       "J4W":"",
-       "H7X":"",
-       "H2P":"",
-       "H4G":"",
-       "H7S":"",
-       "J7C":"",
-       "H3W":"",
-       "J7V":"",
-       "H3J":"",
-       "J3G":"",
-       "H8N":"",
+       # "H2N":"",
+       # "J0P":"",
+       # "J6N":"",
+       # "J0Z":"",
+       # "J7R":"",
+       # "H1M":"",
+       # "H7M":"",
+       # "H4M":"",
+       # "J4N":"",
+       # "H3Y":"",
+       # "J6J":"",
+       # "J7W":"",
+       # "J4Y":"",
+       # "J7G":"",
+       # "J2Y":"",
+       # "J3K":"",
+       # "J4T":"",
+       # "H7Z":"",
+       # "H2V":"",
+       # "H2W":"",
+       # "H3X":"",
+       # "H3C":"",
+       # "J4W":"",
+       # "H7X":"",
+       # "H2P":"",
+       # "H4G":"",
+       # "H7S":"",
+       # "J7C":"",
+       # "H3W":"",
+       # "J7V":"",
+       # "H3J":"",
+       # "J3G":"",
+       # "H8N":"",
        #"J5A":"saint-constant",
-       "H1L":"",
+       #"H1L":"",
        #"H3E":"",
-       "H4H":"",
-       "H2X":"",
-       "H7G":"",
-       "J7T":"",
-       "J0R":"",
-       "H9H":"",
-       "J5B":"",
-       "H2Z":"",
-       "H8Y":"",
+       # "H4H":"",
+       # "H2X":"",
+       # "H7G":"",
+       # "J7T":"",
+       # "J0R":"",
+       # "H9H":"",
+       # "J5B":"",
+       # "H2Z":"",
+       # "H8Y":"",
        "H2B":"",
        "J3E":"",
        "J5R":"",
@@ -211,25 +212,28 @@ FSA = {
 
 
 struc = {
-"J0L":"",
-       "H3H":"",
-       "H3R":"",
-       "H2Y":"",
-       "H8Z":"",
-       "J4K":"",
-       "H8P":"",
-       "H1G":"",
-       "H4B":"",
-       "H9P":"",
-       "H9K":"",
-       "H1S":"",
-       "H9A":"",
-       "H1Z":"",
-       "H1B":""
+"J7C":"",
+       "H3W":"",
+       "J7V":"",
+       "H3J":"",
+       "J3G":"",
+       "H8N":"",
+"H1L":"",
+"H4H":"",
+       "H2X":"",
+       "H7G":"",
+       "J7T":"",
+       "J0R":"",
+       "H9H":"",
+       "J5B":"",
+       "H2Z":"",
+       "H8Y":"",
+
 
 }
 
 for k, v in struc.items():
+    print(k)
     sendreq(k)
 
 print("done")
