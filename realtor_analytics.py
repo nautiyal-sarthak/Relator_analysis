@@ -57,7 +57,7 @@ def getSheetcredentials():
             token.write(creds.to_json())
     return creds
 
-
+@st.cache
 def getDataFrame(credentials,SPREADSHEET_ID):
     print("reading " + SPREADSHEET_ID)
     service = build('sheets', 'v4', credentials=credentials)
@@ -77,7 +77,7 @@ def getMergedDataframe(folder_id):
     results = drive.files().list(q = "'" + folder_id + "' in parents and mimeType= 'application/vnd.google-apps.spreadsheet'").execute()
     items = results.get('files', [])
     dflst = []
-    for item in items[:5]:
+    for item in items[:6]:
         print(u'{0} ({1})'.format(item['name'], item['id']))
         df = getFormatedDf(getDataFrame(sheet_credentials,item['id']))
         dflst.append(df)
@@ -87,7 +87,7 @@ def getMergedDataframe(folder_id):
     combined_df["price"] = pd.to_numeric(combined_df["price"])
     return combined_df
 
-
+@st.cache
 def getFormatedDf(dfIn):
     print("Formating DF")
     dfOut = dfIn[['Bedrooms','price','Type','extract_time','PostalCode','AddressText']]
@@ -97,7 +97,7 @@ def getFormatedDf(dfIn):
 
     return dfOut[['Bedrooms','price','Type','extract_time','fsa']]
 
-
+@st.cache
 def getDetails(df_indexed,key,output):
     try:
        result = df_indexed.loc[key, output]
@@ -115,6 +115,7 @@ def getDetails(df_indexed,key,output):
     return out
 
 
+@st.cache
 def display_map(df,option):
     print("render map")
     print(st.session_state["selected_fsa"])
@@ -185,7 +186,7 @@ def display_map(df,option):
         state_fsa = st_map['last_active_drawing']['properties']['postal-fsa']
         st.session_state["selected_fsa"] = state_fsa
 
-
+@st.cache
 def getGroupedData(df):
     df['price'] = pd.to_numeric(df['price'], errors='coerce')
     df = df.dropna(subset=['price'])
@@ -209,7 +210,7 @@ def main():
     rent_og_Df = getMergedDataframe(rent_folderid)
 
     st.title("Real Estate Analytics")
-    st.subheader("Find the best area to invest money in Montreal based on the return of investment(ROI)")
+    st.subheader("Find the best area to invest money in Montreal")
 
     min_price, max_price = st.select_slider(
         'Select the price range',
@@ -337,7 +338,6 @@ def main():
                 st.plotly_chart(px.line(rent_ration_df, x='extract_time',
                                         y="ratio"
                                         ))
-
 
 
 
